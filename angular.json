@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/web-scale",
+            "outputPath": "docs",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -123,6 +123,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "web-scale"
+    }
+  },
+  "defaultProject": "web-scale",
+  "cli": {
+    "analytics": "1e9d6b3b-428b-4c34-b0ff-56ed307ca6c6"
+  }
 }
