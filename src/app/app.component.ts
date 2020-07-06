@@ -15,6 +15,7 @@ export class AppComponent implements OnInit {
   public battery: number;
   public unit: string;
   public isMenuCollapsed: boolean;
+  public foo = String.fromCodePoint(0x1F937);
   constructor(private ws: WeightService) {
     this.isMenuCollapsed = true;
     this.unit = 'kg';

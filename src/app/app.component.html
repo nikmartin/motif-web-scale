@@ -15,7 +15,7 @@
 
     </ul>
     <a (click)="isMenuCollapsed = true" target="_blank" href="https://github.com/nikmartin/motif-web-scale">
-      <img src="/assets/GitHub-Mark-Light-32px.png"></a>
+      <img src="assets/GitHub-Mark-Light-32px.png"></a>
 
   </div>
 </nav>
@@ -24,7 +24,8 @@
 <main role="main" class="container">
   <div class="main">
 
-    <h1>Weight: {{weight}} {{unit}}</h1><button type="button" class="btn btn-secondary" (click)="zero()">Zero
+    <h1>Weight: {{weight ? weight : foo }} {{unit}}</h1><button type="button" class="btn btn-secondary"
+      (click)="zero()">Zero
       Scale </button>
     <br><br>
 
@@ -43,15 +44,20 @@
   </div>
   <h4>What is this?</h4>
   <p>The <a target="_blank"
-      href="https://sidedeal.com/deals/motif-mentor-smart-perfect-coffee-drink-baking-scale-12"> Motif
-      Mentor Smart Scale</a>
-    is a neat Bluetooth based scale, that has crappy app support. This web app
-    adds what everyone asks for when they get the scale: "How do I just weight something?!?"
+      href="https://sidedeal.com/deals/motif-mentor-smart-perfect-coffee-drink-baking-scale-12">
+      Motif Mentor Smart Scale</a>
+    is a neat Bluetooth based scale that has poor app support. This web app
+    does what everyone asks for when they get the scale:
+  </p>
+  <blockquote class="blockquote">
+    <p>"I just want to weigh stuff"</p>
+    <footer class="blockquote-footer">everyone</footer>
+  </blockquote>
+  <p>
     The scale is a <a href="https://en.wikipedia.org/wiki/Bluetooth_Low_Energy">Bluetooth Low Energy
-      device</a>
-    ,and Google Chrome has <a target="_blank" href="https://webbluetoothcg.github.io/web-bluetooth/">Web
-      Bluetooth</a>
-    support, so I wrote this web app to connect to the Motif Perfect scale and just do one thing well: weigh
-    things.
+      device</a>, and Google Chrome has <a target="_blank"
+      href="https://webbluetoothcg.github.io/web-bluetooth/">Web
+      Bluetooth</a> support, so I wrote this app to connect to the Motif Perfect scale and just do one
+    thing well: weigh stuff.
   </p>
 </main>
