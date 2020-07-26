@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BluetoothCore } from '@manekinekko/angular-web-bluetooth';
 import { map, mergeMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,26 +12,45 @@ export class WeightService {
   static GATT_PRIMARY_SERVICE = '1bc50001-0200-0aa5-e311-24cb004a98c5';
   static GATT_CHARACTERISTIC_WEIGHT = '1bc50002-0200-0aa5-e311-24cb004a98c5';
 
+
+  // 00002902-0000-1000-8000-00805f9b34fb
+  // 00002904-0000-1000-8000-00805f9b34fb
   constructor(public ble: BluetoothCore) {
-    this.getDevice().subscribe(dev => {
-      dev.gatt.connect();
+
+  }
+
+  listen(): Observable<boolean> {
+    return new Observable((observer) => {
+      this.ble.getDevice$().subscribe(dev => {
+        dev.gatt.getPrimaryServices().then(uuids => {
+          console.log(uuids);
+        });
+        dev.addEventListener('gattserverdisconnected', (ev) => {
+          console.log(ev);
+          observer.next(false);
+        });
+        dev.addEventListener('advertisementreceived', (ev) => {
+          console.log(ev);
+        });
+      });
+
     });
   }
 
-  getDevice() {
-    // call this method to get the connected device
+  getDevice(): Observable<BluetoothDevice> {
+
     return this.ble.getDevice$();
   }
 
-  stream() {
+
+  stream(): Observable<number> {
     // call this method to get a stream of values emitted by the device
     return this.ble.streamValues$().pipe(map((value: DataView) => value.getInt32(0, true) * Math.pow(10, -6)));
   }
 
-  disconnectDevice() {
-    this.ble.disconnectDevice();
+  disconnectDevice(): void {
+    return this.ble.disconnectDevice();
   }
-
   /**
    * Get Weight GATT Characteristic value.
    * This logic is specific to this service, this is why we can't abstract it elsewhere.

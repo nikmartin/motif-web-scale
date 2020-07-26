@@ -24,9 +24,21 @@
 <main role="main" class="container">
   <div class="main">
 
-    <h1>Weight: {{weight ? weight : foo }} {{unit}}</h1><button type="button" class="btn btn-secondary"
-      (click)="zero()">Zero
-      Scale </button>
+    <h1>Weight: {{weight}} {{unit}}</h1>
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <button type="button" class="btn btn-primary" (click)="connect()">
+        Connect
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="zero()">
+        Zero/Tare
+      </button>
+
+      <button type="button" class="btn btn-danger" (click)="disconnect()">
+        Disconnect
+      </button>
+    </div>
+
+
     <br><br>
 
 
@@ -60,4 +72,12 @@
       Bluetooth</a> support, so I wrote this app to connect to the Motif Perfect scale and just do one
     thing well: weigh stuff.
   </p>
+  <h4>Notes</h4>
+  <ul>
+    <li>The scale times out in 5 minutes, whether you are using it or not. Each
+      time it does, the blue light on it will start flashing. </li>
+    <li>It is not possible to read the battery level AND weight at the same time.
+      This is a limittation of BLE, not the scale.
+    </li>
+  </ul>
 </main>

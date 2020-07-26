@@ -1,28 +1,29 @@
 import { Injectable } from '@angular/core';
 import { map, mergeMap } from 'rxjs/operators';
 import { BluetoothCore } from '@manekinekko/angular-web-bluetooth';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BatteryLevelService {
-  static GATT_CHARACTERISTIC_BATTERY_LEVEL = '00002a19-0000-1000-8000-00805f9b34fb';
-  static GATT_PRIMARY_SERVICE = '0x180f';
+  static GATT_CHARACTERISTIC_BATTERY_LEVEL = 0x2a19;
+  static GATT_PRIMARY_SERVICE = 0x180f;
 
   constructor(public ble: BluetoothCore) { }
 
-  getDevice() {
+  getDevice(): Observable<BluetoothDevice> {
     // call this method to get the connected device
     return this.ble.getDevice$();
   }
 
-  stream() {
+  stream(): Observable<number> {
     // call this method to get a stream of values emitted by the device
 
     return this.ble.streamValues$().pipe(map((value: DataView) => value.getUint8(0)));
   }
 
-  disconnectDevice() {
+  disconnectDevice(): void {
     this.ble.disconnectDevice();
   }
 
@@ -61,7 +62,9 @@ export class BatteryLevelService {
         }),
 
         // 5) on that DataView, get the right value
-        map((value: DataView) => value.getUint8(0))
+        map((value: DataView) => {
+          return value.getUint8(0);
+        })
       );
   }
 }

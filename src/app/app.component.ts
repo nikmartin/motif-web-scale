@@ -12,32 +12,40 @@ export class AppComponent implements OnInit {
   title = 'Web Scale';
   offset: number;
   public weight: number;
-  public battery: number;
+
   public unit: string;
   public isMenuCollapsed: boolean;
-  public foo = String.fromCodePoint(0x1F937);
-  constructor(private ws: WeightService) {
+  public isConnected = false;
+  constructor(private ws: WeightService, private batt: BatteryLevelService) {
     this.isMenuCollapsed = true;
     this.unit = 'kg';
   }
-  ngOnInit(): void {
-
-    this.zero();
-  }
-
+  ngOnInit(): void { }
 
   zero(): void {
-    this.ws.value().subscribe(val => {
+    const sub = this.ws.stream().subscribe(val => {
       this.offset = val;
+      sub.unsubscribe();
       this.stream();
     });
+  }
+  connect(): void {
+    this.ws.listen();
+    this.ws.value().subscribe(val => {
+      this.weight = +val.toFixed(4);
+      console.log('connected:', val);
+    });
+  }
+  disconnect(): void {
+    this.ws.disconnectDevice();
   }
   do(): void {
     this.ws.value().subscribe(val => {
       this.weight = +(val - this.offset).toFixed(6);
     });
   }
-  stream() {
+
+  stream(): void {
 
     this.ws.stream().subscribe(val => {
 
@@ -50,6 +58,7 @@ export class AppComponent implements OnInit {
           break;
         case 'oz':
           this.weight = +(35.274 * (val - this.offset)).toFixed(2);
+          break;
         default:
           break;
       }
@@ -59,7 +68,7 @@ export class AppComponent implements OnInit {
 
     });
   }
-  units(unit: string) {
+  units(unit: string): void {
     this.unit = unit;
   }
 
