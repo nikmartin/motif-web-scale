@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { BatteryLevelService } from './battery-level.service';
 import { WeightService } from './weight.service';
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -16,6 +17,7 @@ export class AppComponent implements OnInit {
   public unit: string;
   public isMenuCollapsed: boolean;
   public isConnected = false;
+  private streamSub: Subscription;
   constructor(private ws: WeightService, private batt: BatteryLevelService) {
     this.isMenuCollapsed = true;
     this.unit = 'kg';
@@ -31,23 +33,25 @@ export class AppComponent implements OnInit {
   }
   connect(): void {
     this.ws.listen();
-    this.ws.value().subscribe(val => {
-      this.weight = +val.toFixed(4);
+    const sub = this.ws.value().subscribe(val => {
       console.log('connected:', val);
+      this.offset = val;
+      sub.unsubscribe();
+      this.stream();
     });
   }
   disconnect(): void {
     this.ws.disconnectDevice();
+    this.weight = null;
   }
-  do(): void {
-    this.ws.value().subscribe(val => {
-      this.weight = +(val - this.offset).toFixed(6);
-    });
-  }
+
 
   stream(): void {
 
-    this.ws.stream().subscribe(val => {
+    if (this.streamSub) {
+      this.streamSub.unsubscribe();
+    }
+    this.streamSub = this.ws.stream().subscribe(val => {
 
       switch (this.unit) {
         case 'kg':

@@ -22,15 +22,9 @@ export class WeightService {
   listen(): Observable<boolean> {
     return new Observable((observer) => {
       this.ble.getDevice$().subscribe(dev => {
-        dev.gatt.getPrimaryServices().then(uuids => {
-          console.log(uuids);
-        });
         dev.addEventListener('gattserverdisconnected', (ev) => {
           console.log(ev);
           observer.next(false);
-        });
-        dev.addEventListener('advertisementreceived', (ev) => {
-          console.log(ev);
         });
       });
 
