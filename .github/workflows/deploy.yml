@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
           path: docs
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: build
     environment:
       name: github-pages
