@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BluetoothCore } from '@manekinekko/angular-web-bluetooth';
-import { map, mergeMap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { filter, map, mergeMap } from 'rxjs/operators';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ScaleConnectionService, WEIGHT_SERVICE, WEIGHT_CHARACTERISTIC } from './scale-connection.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,41 +10,41 @@ import { Observable } from 'rxjs';
 export class WeightService {
 
 
-  static GATT_PRIMARY_SERVICE = '1bc50001-0200-0aa5-e311-24cb004a98c5';
-  static GATT_CHARACTERISTIC_WEIGHT = '1bc50002-0200-0aa5-e311-24cb004a98c5';
+  static GATT_PRIMARY_SERVICE = WEIGHT_SERVICE;
+  static GATT_CHARACTERISTIC_WEIGHT = WEIGHT_CHARACTERISTIC;
+
+  private readonly weightSubject = new BehaviorSubject<number>(null);
+
+  private readonly onWeightChanged = (event: Event) => {
+    const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
+    if (characteristic.value) {
+      this.weightSubject.next(characteristic.value.getInt32(0, true) * Math.pow(10, -6));
+    }
+  };
 
 
   // 00002902-0000-1000-8000-00805f9b34fb
   // 00002904-0000-1000-8000-00805f9b34fb
-  constructor(public ble: BluetoothCore) {
+  constructor(public ble: BluetoothCore, private connection: ScaleConnectionService) {
 
   }
 
   listen(): Observable<boolean> {
-    return new Observable((observer) => {
-      this.ble.getDevice$().subscribe(dev => {
-        dev.addEventListener('gattserverdisconnected', (ev) => {
-          console.log(ev);
-          observer.next(false);
-        });
-      });
-
-    });
+    return this.connection.connected$;
   }
 
   getDevice(): Observable<BluetoothDevice> {
 
-    return this.ble.getDevice$();
+    return this.connection.device$;
   }
 
 
   stream(): Observable<number> {
-    // call this method to get a stream of values emitted by the device
-    return this.ble.streamValues$().pipe(map((value: DataView) => value.getInt32(0, true) * Math.pow(10, -6)));
+    return this.weightSubject.asObservable().pipe(filter(value => value !== null));
   }
 
   disconnectDevice(): void {
-    return this.ble.disconnectDevice();
+    this.connection.disconnect();
   }
   /**
    * Get Weight GATT Characteristic value.
@@ -55,35 +56,42 @@ export class WeightService {
   value() {
     console.log('Getting Weight...');
 
-    return this.ble
-
-      // 1) call the discover method will trigger the discovery process (by the browser)
-      .discover$({
-        acceptAllDevices: true,
-        optionalServices: [WeightService.GATT_PRIMARY_SERVICE]
-      })
+    return this.connection
+      .connect()
       .pipe(
 
         // 2) get that service
         mergeMap((gatt: BluetoothRemoteGATTServer) => {
-          // gatt.connect();
           return this.ble.getPrimaryService$(gatt, WeightService.GATT_PRIMARY_SERVICE);
         }),
 
-        // 3) get a specific characteristic on that service
+        // 3) get the characteristic directly so the listener is attached
+        // before notifications are enabled
         mergeMap((primaryService: BluetoothRemoteGATTService) => {
-          return this.ble.getCharacteristic$(primaryService, WeightService.GATT_CHARACTERISTIC_WEIGHT);
+          return primaryService.getCharacteristic(WeightService.GATT_CHARACTERISTIC_WEIGHT);
         }),
 
-        // 4) ask for the value of that characteristic (will return a DataView)
+        mergeMap((characteristic: BluetoothRemoteGATTCharacteristic) => {
+          return this.startNotifications(characteristic);
+        }),
+
+        // 4) read the initial value so the first displayed weight is available
+        // even if the scale does not send a notification immediately
         mergeMap((characteristic: BluetoothRemoteGATTCharacteristic) => {
           return this.ble.readValue$(characteristic);
         }),
 
         // 5) on that DataView, get the right value
         map((value: DataView) => {
-          return value.getInt32(0, true) * Math.pow(10, -6);
+          const weight = value.getInt32(0, true) * Math.pow(10, -6);
+          this.weightSubject.next(weight);
+          return weight;
         })
       );
+  }
+
+  private startNotifications(characteristic: BluetoothRemoteGATTCharacteristic): Promise<BluetoothRemoteGATTCharacteristic> {
+    characteristic.addEventListener('characteristicvaluechanged', this.onWeightChanged);
+    return characteristic.startNotifications().then(() => characteristic);
   }
 }
