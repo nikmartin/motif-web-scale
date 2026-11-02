@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { BatteryLevelService } from './battery-level.service';
 import { WeightService } from './weight.service';
+import { ScaleConnectionService } from './scale-connection.service';
 import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-root',
@@ -18,11 +19,11 @@ export class AppComponent implements OnInit {
   public isMenuCollapsed: boolean;
   public isConnected = false;
   private streamSub: Subscription;
-  constructor(private ws: WeightService, private batt: BatteryLevelService) {
+  constructor(private ws: WeightService, private batt: BatteryLevelService, private connection: ScaleConnectionService) {
     this.isMenuCollapsed = true;
     this.unit = 'kg';
   }
-  ngOnInit(): void { }
+  ngOnInit(): void { this.connection.restoreKnownDevice(); }
 
   zero(): void {
     const sub = this.ws.stream().subscribe(val => {

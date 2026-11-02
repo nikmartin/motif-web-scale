@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BluetoothCore } from '@manekinekko/angular-web-bluetooth';
 import { map, mergeMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { ScaleConnectionService, WEIGHT_SERVICE, WEIGHT_CHARACTERISTIC } from './scale-connection.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,31 +10,23 @@ import { Observable } from 'rxjs';
 export class WeightService {
 
 
-  static GATT_PRIMARY_SERVICE = '1bc50001-0200-0aa5-e311-24cb004a98c5';
-  static GATT_CHARACTERISTIC_WEIGHT = '1bc50002-0200-0aa5-e311-24cb004a98c5';
+  static GATT_PRIMARY_SERVICE = WEIGHT_SERVICE;
+  static GATT_CHARACTERISTIC_WEIGHT = WEIGHT_CHARACTERISTIC;
 
 
   // 00002902-0000-1000-8000-00805f9b34fb
   // 00002904-0000-1000-8000-00805f9b34fb
-  constructor(public ble: BluetoothCore) {
+  constructor(public ble: BluetoothCore, private connection: ScaleConnectionService) {
 
   }
 
   listen(): Observable<boolean> {
-    return new Observable((observer) => {
-      this.ble.getDevice$().subscribe(dev => {
-        dev.addEventListener('gattserverdisconnected', (ev) => {
-          console.log(ev);
-          observer.next(false);
-        });
-      });
-
-    });
+    return this.connection.connected$;
   }
 
   getDevice(): Observable<BluetoothDevice> {
 
-    return this.ble.getDevice$();
+    return this.connection.device$;
   }
 
 
@@ -43,7 +36,7 @@ export class WeightService {
   }
 
   disconnectDevice(): void {
-    return this.ble.disconnectDevice();
+    this.connection.disconnect();
   }
   /**
    * Get Weight GATT Characteristic value.
@@ -55,13 +48,8 @@ export class WeightService {
   value() {
     console.log('Getting Weight...');
 
-    return this.ble
-
-      // 1) call the discover method will trigger the discovery process (by the browser)
-      .discover$({
-        acceptAllDevices: true,
-        optionalServices: [WeightService.GATT_PRIMARY_SERVICE]
-      })
+    return this.connection
+      .connect()
       .pipe(
 
         // 2) get that service

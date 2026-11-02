@@ -2,19 +2,20 @@ import { Injectable } from '@angular/core';
 import { map, mergeMap } from 'rxjs/operators';
 import { BluetoothCore } from '@manekinekko/angular-web-bluetooth';
 import { Observable } from 'rxjs';
+import { ScaleConnectionService, BATTERY_SERVICE, BATTERY_CHARACTERISTIC } from './scale-connection.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BatteryLevelService {
-  static GATT_CHARACTERISTIC_BATTERY_LEVEL = 0x2a19;
-  static GATT_PRIMARY_SERVICE = 0x180f;
+  static GATT_CHARACTERISTIC_BATTERY_LEVEL = BATTERY_CHARACTERISTIC;
+  static GATT_PRIMARY_SERVICE = BATTERY_SERVICE;
 
-  constructor(public ble: BluetoothCore) { }
+  constructor(public ble: BluetoothCore, private connection: ScaleConnectionService) { }
 
   getDevice(): Observable<BluetoothDevice> {
     // call this method to get the connected device
-    return this.ble.getDevice$();
+    return this.connection.device$;
   }
 
   stream(): Observable<number> {
@@ -24,7 +25,7 @@ export class BatteryLevelService {
   }
 
   disconnectDevice(): void {
-    this.ble.disconnectDevice();
+    this.connection.disconnect();
   }
 
   /**
@@ -37,13 +38,8 @@ export class BatteryLevelService {
   value() {
     console.log('Getting Battery level...');
 
-    return this.ble
-
-      // 1) call the discover method will trigger the discovery process (by the browser)
-      .discover$({
-        acceptAllDevices: true,
-        optionalServices: [BatteryLevelService.GATT_PRIMARY_SERVICE]
-      })
+    return this.connection
+      .connect()
       .pipe(
 
         // 2) get that service
